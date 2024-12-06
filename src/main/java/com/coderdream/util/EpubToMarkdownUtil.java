@@ -51,20 +51,25 @@ public class EpubToMarkdownUtil {
 
             // 输出文件名
             for (Path epubFile : epubFiles) {
-                String fileName =  epubFile.getFileName().toString();
+                String fileName = epubFile.getFileName().toString();
                 System.out.println("File Name: " + fileName);
 
                 // 使用Paths类获取Path对象
                 Path path2 = Paths.get(fileName);
 
                 // 获取文件名（不包含后缀）
-                int lastDotIndex = path2.getFileName().toString().lastIndexOf(".");
+                int lastDotIndex = path2.getFileName().toString()
+                    .lastIndexOf(".");
                 if (lastDotIndex >= 0) {
-                    String fileNameWithoutExtension = path2.getFileName().toString().substring(0, lastDotIndex);
-                    System.out.println("File Name Without Extension: " + fileNameWithoutExtension);
-                    EpubToMarkdownUtil.process(folderPath, fileNameWithoutExtension);
+                    String fileNameWithoutExtension = path2.getFileName()
+                        .toString().substring(0, lastDotIndex);
+                    System.out.println("File Name Without Extension: "
+                        + fileNameWithoutExtension);
+                    EpubToMarkdownUtil.process(folderPath,
+                        fileNameWithoutExtension);
                 } else {
-                    System.out.println("File Name Without Extension: " + fileName);
+                    System.out.println(
+                        "File Name Without Extension: " + fileName);
                     EpubToMarkdownUtil.process(folderPath, fileName);
                 }
             }
@@ -73,11 +78,13 @@ public class EpubToMarkdownUtil {
         }
     }
 
-    public static void process(String folderPath, String pureFileName) throws IOException {
+    public static String process(String folderPath, String pureFileName)
+        throws IOException {
 
         String fileName = folderPath + File.separator + pureFileName + ".epub";
         String mdFileName = folderPath + File.separator + pureFileName + ".md";
-        String zipFileName = folderPath + File.separator + pureFileName + ".zip";
+        String zipFileName =
+            folderPath + File.separator + pureFileName + ".zip";
 
         // 加载 EPUB 文件
         File epubFile = new File(fileName);  // 请替换为你的 EPUB 文件路径
@@ -91,14 +98,16 @@ public class EpubToMarkdownUtil {
         List<Resource> htmlResources = book.getContents();
 
         // 获取所有的图片资源并转换为 List
-        List<Resource> images = new ArrayList<>(book.getResources().getAll());  // 转换为 List
+        List<Resource> images = new ArrayList<>(
+            book.getResources().getAll());  // 转换为 List
 
         // 创建一个 StringBuilder 用来保存 Markdown 内容
         StringBuilder markdownContent = new StringBuilder();
 
         // 遍历 HTML 内容并转换为 Markdown
         for (Resource resource : htmlResources) {
-            String htmlContent = new String(resource.getData(), StandardCharsets.UTF_8);
+            String htmlContent = new String(resource.getData(),
+                StandardCharsets.UTF_8);
 
             // 添加图片前缀
             htmlContent = addImagesPrefix(htmlContent);
@@ -115,7 +124,8 @@ public class EpubToMarkdownUtil {
                 Resource coverImage = getCoverImage(book);
                 if (coverImage != null) {
                     saveImage(coverImage, folderPath + "images");
-                    markdownContent.append("![Cover Image](").append("/images/").append(coverImage.getHref())
+                    markdownContent.append("![Cover Image](").append("/images/")
+                        .append(coverImage.getHref())
                         .append(")\n\n");
                 }
             } else {
@@ -141,7 +151,8 @@ public class EpubToMarkdownUtil {
         markdownContent = replaceAnchorString(markdownContent);
 
         // 写入 Markdown 文件
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(mdFileName))) {
+        try (BufferedWriter writer = new BufferedWriter(
+            new FileWriter(mdFileName))) {
             writer.write(markdownContent.toString());
         }
 
@@ -159,11 +170,13 @@ public class EpubToMarkdownUtil {
             addToZipFolder(folderPath + "images", zos);
         }
 
-        System.out.println("ZIP 文件已生成：" + zipFileName);
         log.info("ZIP 文件已生成：{}", zipFileName);
+
+        return zipFileName;
     }
 
-    private static void addToZipFolder(String folderName, ZipOutputStream zos) throws IOException {
+    private static void addToZipFolder(String folderName, ZipOutputStream zos)
+        throws IOException {
         File folder = new File(folderName);
         System.out.println("folderName: " + folderName);
         File[] files = folder.listFiles();
@@ -172,14 +185,16 @@ public class EpubToMarkdownUtil {
                 if (file.isDirectory()) {
                     addToZipFolder(file.getAbsolutePath(), zos);
                 } else {
-                    String zipEntryName = "images/" + file.getName(); // 修改路径，放在 images 文件夹中
+                    String zipEntryName =
+                        "images/" + file.getName(); // 修改路径，放在 images 文件夹中
                     addToZipFile(file.getAbsolutePath(), zipEntryName, zos);
                 }
             }
         }
     }
 
-    private static void addToZipFile(String fileName, String zipEntryName, ZipOutputStream zos) throws IOException {
+    private static void addToZipFile(String fileName, String zipEntryName,
+        ZipOutputStream zos) throws IOException {
         File file = new File(fileName);
         System.out.println("Adding: " + file.getName());
         FileInputStream fis = new FileInputStream(file);
@@ -202,7 +217,7 @@ public class EpubToMarkdownUtil {
         for (Element imgTag : imgTags) {
             String src = imgTag.attr("src");
             System.out.println("src: " + src);
-            src  = addImagesPrefix2(src);
+            src = addImagesPrefix2(src);
             imgTag.attr("src", src);
         }
 
@@ -217,25 +232,31 @@ public class EpubToMarkdownUtil {
         }
     }
 
-    public static StringBuilder replaceAnchorString(StringBuilder originalString) {
+    public static StringBuilder replaceAnchorString(
+        StringBuilder originalString) {
         String regex = "\\{#.*?\\}";
         String replacement = "";
-        return new StringBuilder(originalString.toString().replaceAll(regex, replacement));
+        return new StringBuilder(
+            originalString.toString().replaceAll(regex, replacement));
     }
 
-    public static StringBuilder replaceImagesLinks(StringBuilder originalString) {
+    public static StringBuilder replaceImagesLinks(
+        StringBuilder originalString) {
         String replacementString = "/images/images/";
         String newString = "../images/";
-        return new StringBuilder(originalString.toString().replace(newString, replacementString));
+        return new StringBuilder(
+            originalString.toString().replace(newString, replacementString));
     }
 
     public static String cleanHtmlContent(String htmlContent) {
         Parser parser = Parser.builder().build();
-        FlexmarkHtmlConverter converter = FlexmarkHtmlConverter.builder().build();
+        FlexmarkHtmlConverter converter = FlexmarkHtmlConverter.builder()
+            .build();
         return converter.convert(htmlContent);
     }
 
-    public static void saveImage(Resource image, String imageDir) throws IOException {
+    public static void saveImage(Resource image, String imageDir)
+        throws IOException {
         InputStream inputStream = new ByteArrayInputStream(image.getData());
         File imageFile = new File(imageDir, image.getHref());
         imageFile.getParentFile().mkdirs();
@@ -267,7 +288,8 @@ public class EpubToMarkdownUtil {
     public static Resource getCoverImage(Book book) {
         Resource coverImage = null;
         for (Resource resource : book.getResources().getAll()) {
-            if (resource.getMediaType().toString().startsWith("image") && resource.getHref()
+            if (resource.getMediaType().toString().startsWith("image")
+                && resource.getHref()
                 .equals(book.getCoverImage().getHref())) {
                 coverImage = resource;
                 break;
@@ -276,7 +298,8 @@ public class EpubToMarkdownUtil {
         return coverImage;
     }
 
-    private static void addToZipFile(String fileName, ZipOutputStream zos) throws IOException {
+    private static void addToZipFile(String fileName, ZipOutputStream zos)
+        throws IOException {
         File file = new File(fileName);
         System.out.println("Adding: " + file.getName());
         FileInputStream fis = new FileInputStream(file);
