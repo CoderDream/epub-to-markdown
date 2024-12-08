@@ -104,6 +104,10 @@ public class EpubToMarkdownUtil {
         // 创建一个 StringBuilder 用来保存 Markdown 内容
         StringBuilder markdownContent = new StringBuilder();
 
+        // 先删除images文件夹下的所有文件
+        String imageDir = folderPath + "images";
+        deleteDirectory(new File(imageDir));
+
         // 遍历 HTML 内容并转换为 Markdown
         for (Resource resource : htmlResources) {
             String htmlContent = new String(resource.getData(),
@@ -145,7 +149,8 @@ public class EpubToMarkdownUtil {
         }
 
         // 替换 Markdown 中的图片链接
-        markdownContent = replaceImagesLinks(markdownContent);
+        markdownContent = new StringBuilder(
+            CdStringUtil.replaceImagesLinks(markdownContent.toString()));
 
         // 替换 Markdown 中的 {#XXXX} 格式的子串
         markdownContent = replaceAnchorString(markdownContent);
@@ -210,6 +215,19 @@ public class EpubToMarkdownUtil {
         fis.close();
     }
 
+    public static void deleteDirectory(File dir) {
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteDirectory(child);
+                }
+            }
+        }
+        // The directory is now empty so now it can be deleted
+        dir.delete();
+    }
+
     public static String addImagesPrefix(String html) {
         Document document = Jsoup.parse(html);
         Elements imgTags = document.select("img");
@@ -240,13 +258,24 @@ public class EpubToMarkdownUtil {
             originalString.toString().replaceAll(regex, replacement));
     }
 
-    public static StringBuilder replaceImagesLinks(
-        StringBuilder originalString) {
-        String replacementString = "/images/images/";
-        String newString = "../images/";
-        return new StringBuilder(
-            originalString.toString().replace(newString, replacementString));
-    }
+//    public static StringBuilder replaceImagesLinks(
+//        StringBuilder originalString) {
+//        String replacementString = "(/images/images/";
+//        String newString = "(/images/";
+//
+//        //      String tempStr = originalString.toString()
+//        //            .replace(newString, replacementString);
+//        // 第一次替换
+//        String tempStr = originalString.toString()
+//            .replace(replacementString, newString);
+//
+//        replacementString = "(/images/images//";
+//        newString = "(/images/";
+//        // 第二次替换
+//        tempStr = originalString.toString()
+//            .replace(replacementString, newString);
+//        return new StringBuilder(tempStr);
+//    }
 
     public static String cleanHtmlContent(String htmlContent) {
         Parser parser = Parser.builder().build();
